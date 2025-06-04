@@ -1,1 +1,93 @@
-﻿
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>Motion Picture Film Maker</title>
+<style>
+    body { font-family: Arial, sans-serif; text-align: center; margin: 20px; }
+    .filmstrip {
+        display: flex;
+        gap: 10px;
+        padding: 20px 10px;
+        background:#000;
+        border-top: 20px solid #444;
+        border-bottom: 20px solid #444;
+        overflow-x: auto;
+    }
+    .filmstrip::before,
+    .filmstrip::after {
+        content: "";
+        display: block;
+        width: 20px;
+        background: repeating-linear-gradient(
+            to bottom,
+            #333,
+            #333 4px,
+            #000 4px,
+            #000 8px
+        );
+    }
+    .filmstrip img {
+        height: 120px;
+        border: 4px solid #fff;
+        box-shadow: 0 0 5px #000;
+    }
+    #gif-output img { max-width: 100%; margin-top: 20px; }
+</style>
+</head>
+<body>
+<h1>Motion Picture Film Maker</h1>
+<p>画像を選択してフィルム風のスライドショーを作成し、GIFとしてダウンロードできます。</p>
+<input type="file" id="image-upload" accept="image/*" multiple>
+<button id="generate-gif" disabled>GIF生成</button>
+<div class="filmstrip" id="filmstrip"></div>
+<div id="gif-output"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gifshot/0.3.2/gifshot.min.js"></script>
+<script>
+const imageInput = document.getElementById('image-upload');
+const filmstrip = document.getElementById('filmstrip');
+const generateBtn = document.getElementById('generate-gif');
+let imageUrls = [];
+
+imageInput.addEventListener('change', (e) => {
+    filmstrip.innerHTML = '';
+    imageUrls = [];
+    Array.from(e.target.files).forEach(file => {
+        const url = URL.createObjectURL(file);
+        imageUrls.push(url);
+        const img = document.createElement('img');
+        img.src = url;
+        filmstrip.appendChild(img);
+    });
+    generateBtn.disabled = imageUrls.length === 0;
+});
+
+generateBtn.addEventListener('click', () => {
+    if (imageUrls.length === 0) return;
+    generateBtn.disabled = true;
+    gifshot.createGIF({
+        images: imageUrls,
+        gifWidth: 300,
+        gifHeight: 200,
+        interval: 1
+    }, function(obj) {
+        generateBtn.disabled = false;
+        if(!obj.error) {
+            const image = obj.image;
+            const animatedImage = document.createElement('img');
+            animatedImage.src = image;
+            const downloadLink = document.createElement('a');
+            downloadLink.href = image;
+            downloadLink.download = 'slideshow.gif';
+            downloadLink.textContent = 'GIFをダウンロード';
+            const output = document.getElementById('gif-output');
+            output.innerHTML = '';
+            output.appendChild(animatedImage);
+            output.appendChild(document.createElement('br'));
+            output.appendChild(downloadLink);
+        }
+    });
+});
+</script>
+</body>
+</html>
