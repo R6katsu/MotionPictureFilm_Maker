@@ -44,68 +44,31 @@
 </style>
 </head>
 <body>
-<h1>画像アップロード</h1>
+<h1>画像プレビュー</h1>
 <form id="upload-form">
   <input type="file" id="images" name="images" accept="image/*" multiple required>
-  <button type="submit">アップロード</button>
+  <button type="submit">表示</button>
 </form>
-<button id="download-gif">GIFをダウンロード</button>
+<p>GIF作成は <code>node makegif.js 出力.gif 画像1 画像2 ...</code> を実行してください。</p>
 <div id="result"></div>
 <script>
-let uploadedFiles = [];
-document.getElementById('upload-form').addEventListener('submit', async (e) => {
+const fileInput = document.getElementById('images');
+const result = document.getElementById('result');
+
+document.getElementById('upload-form').addEventListener('submit', (e) => {
   e.preventDefault();
-  const result = document.getElementById('result');
-  const formData = new FormData();
-  const fileInput = document.getElementById('images');
+  result.innerHTML = '';
   if (fileInput.files.length === 0) {
     result.textContent = 'ファイルを選択してください。';
     return;
   }
-  for (const file of fileInput.files) {
-    formData.append('images', file);
-  }
-  try {
-    const res = await fetch('/upload', {
-      method: 'POST',
-      body: formData
-    });
-    if (res.ok) {
-      const data = await res.json();
-      uploadedFiles = data.files;
-      result.innerHTML = '';
-      data.files.forEach(file => {
-        const div = document.createElement('div');
-        div.className = 'film-strip';
-        div.innerHTML = `\n          <div class="perforation top"></div>\n          <img src="${file}" alt="uploaded">\n          <div class="perforation bottom"></div>\n        `;
-        result.appendChild(div);
-      });
-    } else {
-      result.textContent = 'アップロード失敗';
-    }
-  } catch (err) {
-    result.textContent = 'エラーが発生しました';
-  }
-});
-
-document.getElementById('download-gif').addEventListener('click', async () => {
-  if (uploadedFiles.length === 0) return;
-  const res = await fetch('/gif', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({ files: uploadedFiles })
+  Array.from(fileInput.files).forEach(file => {
+    const url = URL.createObjectURL(file);
+    const div = document.createElement('div');
+    div.className = 'film-strip';
+    div.innerHTML = `\n      <div class="perforation top"></div>\n      <img src="${url}" alt="uploaded">\n      <div class="perforation bottom"></div>\n    `;
+    result.appendChild(div);
   });
-  if (res.ok) {
-    const blob = await res.blob();
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'film.gif';
-    a.click();
-    URL.revokeObjectURL(url);
-  }
 });
 </script>
 </body>
