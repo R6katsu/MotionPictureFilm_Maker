@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>画像アップロード</title>
+<style>
+  .film-strip {
+    position: relative;
+    display: inline-block;
+    padding: 20px 0;
+    background: #000;
+  }
+
+  #result {
+    display: flex;
+    overflow-x: auto;
+    gap: 10px;
+    padding-top: 10px;
+  }
+
+  .film-strip img {
+    display: block;
+    max-width: 100%;
+    height: auto;
+  }
+
+  .perforation {
+    position: absolute;
+    left: 0;
+    width: 100%;
+    height: 20px;
+    background-color: #000;
+    background-image: repeating-linear-gradient(
+      to right,
+      #fff,
+      #fff 10px,
+      #000 10px,
+      #000 20px
+    );
+  }
+
+  .perforation.top { top: 0; }
+  .perforation.bottom { bottom: 0; }
+</style>
+</head>
+<body>
+<h1>画像アップロード</h1>
+<form id="upload-form">
+  <input type="file" id="images" name="images" accept="image/*" multiple required>
+  <button type="submit">アップロード</button>
+</form>
+<button id="download-gif">GIFをダウンロード</button>
+<div id="result"></div>
+<script>
+let uploadedFiles = [];
+document.getElementById('upload-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const result = document.getElementById('result');
+  const formData = new FormData();
+  const fileInput = document.getElementById('images');
+  if (fileInput.files.length === 0) {
+    result.textContent = 'ファイルを選択してください。';
+    return;
+  }
+  for (const file of fileInput.files) {
+    formData.append('images', file);
+  }
+  try {
+    const res = await fetch('/upload', {
+      method: 'POST',
+      body: formData
+    });
+    if (res.ok) {
+      const data = await res.json();
+      uploadedFiles = data.files;
+      result.innerHTML = '';
+      data.files.forEach(file => {
+        const div = document.createElement('div');
+        div.className = 'film-strip';
+        div.innerHTML = `\n          <div class="perforation top"></div>\n          <img src="${file}" alt="uploaded">\n          <div class="perforation bottom"></div>\n        `;
+        result.appendChild(div);
+      });
+    } else {
+      result.textContent = 'アップロード失敗';
+    }
+  } catch (err) {
+    result.textContent = 'エラーが発生しました';
+  }
+});
+
+document.getElementById('download-gif').addEventListener('click', async () => {
+  if (uploadedFiles.length === 0) return;
+  const res = await fetch('/gif', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ files: uploadedFiles })
+  });
+  if (res.ok) {
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'film.gif';
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+});
+</script>
+</body>
+</html>
