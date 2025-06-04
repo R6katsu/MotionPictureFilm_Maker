@@ -3,6 +3,38 @@
 <head>
 <meta charset="UTF-8">
 <title>画像アップロード</title>
+<style>
+  .film-strip {
+    position: relative;
+    display: inline-block;
+    padding: 20px 0;
+    background: #000;
+  }
+
+  .film-strip img {
+    display: block;
+    max-width: 100%;
+    height: auto;
+  }
+
+  .perforation {
+    position: absolute;
+    left: 0;
+    width: 100%;
+    height: 20px;
+    background-color: #000;
+    background-image: repeating-linear-gradient(
+      to right,
+      #fff,
+      #fff 10px,
+      #000 10px,
+      #000 20px
+    );
+  }
+
+  .perforation.top { top: 0; }
+  .perforation.bottom { bottom: 0; }
+</style>
 </head>
 <body>
 <h1>画像アップロード</h1>
@@ -29,7 +61,8 @@ document.getElementById('upload-form').addEventListener('submit', async (e) => {
     });
     if (res.ok) {
       const data = await res.json();
-      result.textContent = 'アップロード成功: ' + data.file;
+      result.innerHTML =
+        `<div class="film-strip"><div class="perforation top"></div><img src="${data.file}" alt="uploaded"><div class="perforation bottom"></div></div>`;
     } else {
       result.textContent = 'アップロード失敗';
     }
