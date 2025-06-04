@@ -37,7 +37,7 @@
 </head>
 <body>
 <h1>Motion Picture Film Maker</h1>
-<p>画像を選択してフィルム風のスライドショーを作成し、GIFとしてダウンロードできます。</p>
+<p>画像を選択・追加してフィルム風のスライドショーを作成し、GIFとしてダウンロードできます。</p>
 <input type="file" id="image-upload" accept="image/*" multiple>
 <button id="generate-gif" disabled>GIF生成</button>
 <div class="filmstrip" id="filmstrip"></div>
@@ -50,8 +50,6 @@ const generateBtn = document.getElementById('generate-gif');
 let imageUrls = [];
 
 imageInput.addEventListener('change', (e) => {
-    filmstrip.innerHTML = '';
-    imageUrls = [];
     Array.from(e.target.files).forEach(file => {
         const url = URL.createObjectURL(file);
         imageUrls.push(url);
@@ -60,6 +58,7 @@ imageInput.addEventListener('change', (e) => {
         filmstrip.appendChild(img);
     });
     generateBtn.disabled = imageUrls.length === 0;
+    imageInput.value = '';
 });
 
 generateBtn.addEventListener('click', () => {
