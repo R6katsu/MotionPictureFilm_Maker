@@ -79,9 +79,13 @@ generateBtn.addEventListener('click', () => {
             downloadLink.href = image;
             downloadLink.download = 'slideshow.gif';
             downloadLink.textContent = 'GIFをダウンロード';
+
             const output = document.getElementById('gif-output');
             output.innerHTML = '';
-            output.appendChild(animatedImage);
+            const gifFilmstrip = document.createElement('div');
+            gifFilmstrip.className = 'filmstrip';
+            gifFilmstrip.appendChild(animatedImage);
+            output.appendChild(gifFilmstrip);
             output.appendChild(document.createElement('br'));
             output.appendChild(downloadLink);
         }
