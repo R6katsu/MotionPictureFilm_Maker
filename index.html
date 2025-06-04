@@ -5,6 +5,23 @@
 <title>Motion Picture Film Maker</title>
 <style>
     body { font-family: Arial, sans-serif; text-align: center; margin: 20px; }
+    .film-container {
+        display: flex;
+        justify-content: center;
+        align-items: stretch;
+        width: 340px;
+        margin: auto;
+    }
+    .sprocket {
+        width: 20px;
+        background: repeating-linear-gradient(
+            to bottom,
+            #333,
+            #333 4px,
+            #000 4px,
+            #000 8px
+        );
+    }
     .filmstrip {
         display: flex;
         gap: 10px;
@@ -14,20 +31,6 @@
         border-bottom: 20px solid #444;
         overflow: hidden;
         width: 300px;
-        margin: auto;
-    }
-    .filmstrip::before,
-    .filmstrip::after {
-        content: "";
-        display: block;
-        width: 20px;
-        background: repeating-linear-gradient(
-            to bottom,
-            #333,
-            #333 4px,
-            #000 4px,
-            #000 8px
-        );
     }
     .filmstrip img {
         height: 120px;
@@ -42,12 +45,17 @@
 <p>画像を選択・追加してフィルム風のスライドショーを作成し、GIFとしてダウンロードできます。</p>
 <input type="file" id="image-upload" accept="image/*" multiple>
 <button id="generate-gif" disabled>GIF生成</button>
-<div class="filmstrip" id="filmstrip"></div>
+<div class="film-container">
+    <div class="sprocket"></div>
+    <div class="filmstrip" id="filmstrip"></div>
+    <div class="sprocket"></div>
+</div>
 <div id="gif-output"></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gifshot/0.3.2/gifshot.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script>
 const imageInput = document.getElementById('image-upload');
+const filmContainer = document.querySelector('.film-container');
 const filmstrip = document.getElementById('filmstrip');
 const generateBtn = document.getElementById('generate-gif');
 let imageUrls = [];
@@ -88,14 +96,14 @@ generateBtn.addEventListener('click', async () => {
     for(let pos = 0; pos <= total; pos += step) {
         filmstrip.scrollLeft = pos;
         await new Promise(r => setTimeout(r, 50));
-        const canvas = await html2canvas(filmstrip);
+        const canvas = await html2canvas(filmContainer, {useCORS: true});
         applyFilmGrain(canvas);
         frames.push(canvas.toDataURL('image/png'));
     }
     gifshot.createGIF({
         images: frames,
-        gifWidth: filmstrip.clientWidth,
-        gifHeight: filmstrip.clientHeight,
+        gifWidth: filmContainer.clientWidth,
+        gifHeight: filmContainer.clientHeight,
         interval: 0.2
     }, function(obj) {
         generateBtn.disabled = false;
@@ -110,10 +118,15 @@ generateBtn.addEventListener('click', async () => {
 
             const output = document.getElementById('gif-output');
             output.innerHTML = '';
-            const gifFilmstrip = document.createElement('div');
-            gifFilmstrip.className = 'filmstrip';
-            gifFilmstrip.appendChild(animatedImage);
-            output.appendChild(gifFilmstrip);
+            const gifContainer = document.createElement('div');
+            gifContainer.className = 'film-container';
+            gifContainer.innerHTML = `
+                <div class="sprocket"></div>
+                <div class="filmstrip"></div>
+                <div class="sprocket"></div>
+            `;
+            gifContainer.querySelector('.filmstrip').appendChild(animatedImage);
+            output.appendChild(gifContainer);
             output.appendChild(document.createElement('br'));
             output.appendChild(downloadLink);
         }
