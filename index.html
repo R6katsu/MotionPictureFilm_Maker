@@ -52,6 +52,20 @@ const filmstrip = document.getElementById('filmstrip');
 const generateBtn = document.getElementById('generate-gif');
 let imageUrls = [];
 
+function applyFilmGrain(canvas) {
+    const ctx = canvas.getContext('2d');
+    const { width, height } = canvas;
+    const imgData = ctx.getImageData(0, 0, width, height);
+    const data = imgData.data;
+    for (let i = 0; i < data.length; i += 4) {
+        const grain = (Math.random() - 0.5) * 30;
+        data[i] = Math.max(0, Math.min(255, data[i] + grain));
+        data[i + 1] = Math.max(0, Math.min(255, data[i + 1] + grain));
+        data[i + 2] = Math.max(0, Math.min(255, data[i + 2] + grain));
+    }
+    ctx.putImageData(imgData, 0, 0);
+}
+
 imageInput.addEventListener('change', (e) => {
     Array.from(e.target.files).forEach(file => {
         const url = URL.createObjectURL(file);
@@ -75,6 +89,7 @@ generateBtn.addEventListener('click', async () => {
         filmstrip.scrollLeft = pos;
         await new Promise(r => setTimeout(r, 50));
         const canvas = await html2canvas(filmstrip);
+        applyFilmGrain(canvas);
         frames.push(canvas.toDataURL('image/png'));
     }
     gifshot.createGIF({
