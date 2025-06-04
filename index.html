@@ -49,11 +49,13 @@
   <input type="file" id="images" name="images" accept="image/*" multiple required>
   <button type="submit">表示</button>
 </form>
+<button id="gif-button" type="button">GIFとして出力</button>
 <p>GIF作成は <code>node makegif.js 出力.gif 画像1 画像2 ...</code> を実行してください。</p>
 <div id="result"></div>
 <script>
 const fileInput = document.getElementById('images');
 const result = document.getElementById('result');
+const gifButton = document.getElementById('gif-button');
 
 document.getElementById('upload-form').addEventListener('submit', (e) => {
   e.preventDefault();
@@ -69,6 +71,35 @@ document.getElementById('upload-form').addEventListener('submit', (e) => {
     div.innerHTML = `\n      <div class="perforation top"></div>\n      <img src="${url}" alt="uploaded">\n      <div class="perforation bottom"></div>\n    `;
     result.appendChild(div);
   });
+});
+
+gifButton.addEventListener('click', async () => {
+  if (fileInput.files.length === 0) {
+    alert('ファイルを選択してください。');
+    return;
+  }
+  const formData = new FormData();
+  Array.from(fileInput.files).forEach(f => formData.append('images', f));
+  try {
+    const uploadRes = await fetch('/upload', { method: 'POST', body: formData });
+    const { files } = await uploadRes.json();
+    const gifRes = await fetch('/gif', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ files })
+    });
+    const blob = await gifRes.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'film.gif';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  } catch (err) {
+    alert('GIF作成に失敗しました');
+  }
 });
 </script>
 </body>
