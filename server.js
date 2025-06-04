@@ -24,9 +24,9 @@ const upload = multer({ storage });
 
 app.use(express.static(__dirname));
 
-app.post('/upload', upload.single('image'), (req, res) => {
-  const filePath = path.join('uploads', req.file.filename);
-  res.json({ message: 'Upload successful', file: filePath });
+app.post('/upload', upload.array('images'), (req, res) => {
+  const files = req.files.map(f => path.join('uploads', f.filename));
+  res.json({ message: 'Upload successful', files });
 });
 
 app.listen(PORT, () => {

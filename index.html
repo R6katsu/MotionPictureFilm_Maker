@@ -11,6 +11,13 @@
     background: #000;
   }
 
+  #result {
+    display: flex;
+    overflow-x: auto;
+    gap: 10px;
+    padding-top: 10px;
+  }
+
   .film-strip img {
     display: block;
     max-width: 100%;
@@ -39,7 +46,7 @@
 <body>
 <h1>画像アップロード</h1>
 <form id="upload-form">
-  <input type="file" id="image" name="image" accept="image/*" required>
+  <input type="file" id="images" name="images" accept="image/*" multiple required>
   <button type="submit">アップロード</button>
 </form>
 <div id="result"></div>
@@ -48,12 +55,14 @@ document.getElementById('upload-form').addEventListener('submit', async (e) => {
   e.preventDefault();
   const result = document.getElementById('result');
   const formData = new FormData();
-  const fileInput = document.getElementById('image');
+  const fileInput = document.getElementById('images');
   if (fileInput.files.length === 0) {
     result.textContent = 'ファイルを選択してください。';
     return;
   }
-  formData.append('image', fileInput.files[0]);
+  for (const file of fileInput.files) {
+    formData.append('images', file);
+  }
   try {
     const res = await fetch('/upload', {
       method: 'POST',
@@ -61,8 +70,13 @@ document.getElementById('upload-form').addEventListener('submit', async (e) => {
     });
     if (res.ok) {
       const data = await res.json();
-      result.innerHTML =
-        `<div class="film-strip"><div class="perforation top"></div><img src="${data.file}" alt="uploaded"><div class="perforation bottom"></div></div>`;
+      result.innerHTML = '';
+      data.files.forEach(file => {
+        const div = document.createElement('div');
+        div.className = 'film-strip';
+        div.innerHTML = `\n          <div class="perforation top"></div>\n          <img src="${file}" alt="uploaded">\n          <div class="perforation bottom"></div>\n        `;
+        result.appendChild(div);
+      });
     } else {
       result.textContent = 'アップロード失敗';
     }
