@@ -24,15 +24,40 @@
     }
     .filmstrip {
         display: flex;
-        gap: 10px;
+        gap: 0;
         padding: 20px 10px;
         background:#000;
-        border-top: 20px solid #444;
-        border-bottom: 20px solid #444;
+        position: relative;
         overflow: hidden;
         width: 300px;
     }
-    .filmstrip img {
+    .filmstrip::before,
+    .filmstrip::after {
+        content: "";
+        position: absolute;
+        left: 0;
+        width: 100%;
+        height: 20px;
+        background: repeating-linear-gradient(
+            to right,
+            #444 0,
+            #444 6px,
+            #000 6px,
+            #000 10px
+        );
+    }
+    .filmstrip::before { top: 0; }
+    .filmstrip::after { bottom: 0; }
+
+    .frame {
+        position: relative;
+        display: flex;
+    }
+    .frame + .frame {
+        border-left: 4px solid #000;
+    }
+    .frame img {
+        display: block;
         height: 120px;
         border: 4px solid #fff;
         box-shadow: 0 0 5px #000;
@@ -78,9 +103,12 @@ imageInput.addEventListener('change', (e) => {
     Array.from(e.target.files).forEach(file => {
         const url = URL.createObjectURL(file);
         imageUrls.push(url);
-        const img = document.createElement('img');
+        const frame = document.createElement("div");
+        frame.className = "frame";
+        const img = document.createElement("img");
         img.src = url;
-        filmstrip.appendChild(img);
+        frame.appendChild(img);
+        filmstrip.appendChild(frame);
     });
     generateBtn.disabled = imageUrls.length === 0;
     imageInput.value = '';
@@ -125,7 +153,10 @@ generateBtn.addEventListener('click', async () => {
                 <div class="filmstrip"></div>
                 <div class="sprocket"></div>
             `;
-            gifContainer.querySelector('.filmstrip').appendChild(animatedImage);
+            const frame = document.createElement("div");
+            frame.className = "frame";
+            frame.appendChild(animatedImage);
+            gifContainer.querySelector(".filmstrip").appendChild(frame);
             output.appendChild(gifContainer);
             output.appendChild(document.createElement('br'));
             output.appendChild(downloadLink);
