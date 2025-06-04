@@ -5,19 +5,16 @@
 <title>Motion Picture Film Maker</title>
 <style>
     body { font-family: Arial, sans-serif; text-align: center; margin: 20px; }
-    .filmstrip {
+    .filmstrip-wrapper {
         display: flex;
-        gap: 10px;
-        padding: 20px 10px;
-        background:#000;
+        overflow: hidden;
+        width: 300px;
+        margin: 0 auto;
         border-top: 20px solid #444;
         border-bottom: 20px solid #444;
-        overflow-x: auto;
+        background: #000;
     }
-    .filmstrip::before,
-    .filmstrip::after {
-        content: "";
-        display: block;
+    .perforation {
         width: 20px;
         background: repeating-linear-gradient(
             to bottom,
@@ -26,6 +23,12 @@
             #000 4px,
             #000 8px
         );
+    }
+    .filmstrip {
+        display: flex;
+        gap: 10px;
+        padding: 20px 10px;
+        background: #000;
     }
     .filmstrip img {
         height: 120px;
@@ -40,9 +43,14 @@
 <p>画像を選択・追加してフィルム風のスライドショーを作成し、GIFとしてダウンロードできます。</p>
 <input type="file" id="image-upload" accept="image/*" multiple>
 <button id="generate-gif" disabled>GIF生成</button>
-<div class="filmstrip" id="filmstrip"></div>
+<div class="filmstrip-wrapper" id="filmstrip-wrapper">
+    <div class="perforation"></div>
+    <div class="filmstrip" id="filmstrip"></div>
+    <div class="perforation"></div>
+</div>
 <div id="gif-output"></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gifshot/0.3.2/gifshot.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script>
 const imageInput = document.getElementById('image-upload');
 const filmstrip = document.getElementById('filmstrip');
@@ -61,14 +69,48 @@ imageInput.addEventListener('change', (e) => {
     imageInput.value = '';
 });
 
-generateBtn.addEventListener('click', () => {
+generateBtn.addEventListener('click', async () => {
     if (imageUrls.length === 0) return;
     generateBtn.disabled = true;
+
+    const wrapper = document.createElement('div');
+    wrapper.className = 'filmstrip-wrapper';
+    const left = document.createElement('div');
+    left.className = 'perforation';
+    const strip = document.createElement('div');
+    strip.className = 'filmstrip';
+    const right = document.createElement('div');
+    right.className = 'perforation';
+    wrapper.appendChild(left);
+    wrapper.appendChild(strip);
+    wrapper.appendChild(right);
+    imageUrls.forEach(url => {
+        const img = document.createElement('img');
+        img.src = url;
+        strip.appendChild(img);
+    });
+    wrapper.style.position = 'fixed';
+    wrapper.style.left = '-9999px';
+    document.body.appendChild(wrapper);
+
+    const frameWidth = wrapper.clientWidth;
+    const perfWidth = left.clientWidth;
+    const visibleWidth = frameWidth - perfWidth * 2;
+    const maxOffset = strip.scrollWidth - visibleWidth;
+    const step = 10;
+    const frames = [];
+    for (let offset = 0; offset <= maxOffset; offset += step) {
+        strip.style.transform = `translateX(-${offset}px)`;
+        const canvas = await html2canvas(wrapper);
+        frames.push(canvas.toDataURL('image/png'));
+    }
+    document.body.removeChild(wrapper);
+
     gifshot.createGIF({
-        images: imageUrls,
-        gifWidth: 300,
-        gifHeight: 200,
-        interval: 1
+        images: frames,
+        gifWidth: frameWidth,
+        gifHeight: wrapper.clientHeight,
+        interval: 0.1
     }, function(obj) {
         generateBtn.disabled = false;
         if(!obj.error) {
@@ -77,15 +119,24 @@ generateBtn.addEventListener('click', () => {
             animatedImage.src = image;
             const downloadLink = document.createElement('a');
             downloadLink.href = image;
-            downloadLink.download = 'slideshow.gif';
+            downloadLink.download = 'filmstrip.gif';
             downloadLink.textContent = 'GIFをダウンロード';
 
             const output = document.getElementById('gif-output');
             output.innerHTML = '';
-            const gifFilmstrip = document.createElement('div');
-            gifFilmstrip.className = 'filmstrip';
-            gifFilmstrip.appendChild(animatedImage);
-            output.appendChild(gifFilmstrip);
+            const gifWrapper = document.createElement('div');
+            gifWrapper.className = 'filmstrip-wrapper';
+            const gifLeft = document.createElement('div');
+            gifLeft.className = 'perforation';
+            const gifStrip = document.createElement('div');
+            gifStrip.className = 'filmstrip';
+            gifStrip.appendChild(animatedImage);
+            const gifRight = document.createElement('div');
+            gifRight.className = 'perforation';
+            gifWrapper.appendChild(gifLeft);
+            gifWrapper.appendChild(gifStrip);
+            gifWrapper.appendChild(gifRight);
+            output.appendChild(gifWrapper);
             output.appendChild(document.createElement('br'));
             output.appendChild(downloadLink);
         }
