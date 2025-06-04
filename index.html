@@ -12,7 +12,9 @@
         background:#000;
         border-top: 20px solid #444;
         border-bottom: 20px solid #444;
-        overflow-x: auto;
+        overflow: hidden;
+        width: 300px;
+        margin: auto;
     }
     .filmstrip::before,
     .filmstrip::after {
@@ -43,6 +45,7 @@
 <div class="filmstrip" id="filmstrip"></div>
 <div id="gif-output"></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gifshot/0.3.2/gifshot.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script>
 const imageInput = document.getElementById('image-upload');
 const filmstrip = document.getElementById('filmstrip');
@@ -61,14 +64,24 @@ imageInput.addEventListener('change', (e) => {
     imageInput.value = '';
 });
 
-generateBtn.addEventListener('click', () => {
+generateBtn.addEventListener('click', async () => {
     if (imageUrls.length === 0) return;
     generateBtn.disabled = true;
+    const frames = [];
+    const step = 20;
+    const total = filmstrip.scrollWidth - filmstrip.clientWidth;
+    filmstrip.scrollLeft = 0;
+    for(let pos = 0; pos <= total; pos += step) {
+        filmstrip.scrollLeft = pos;
+        await new Promise(r => setTimeout(r, 50));
+        const canvas = await html2canvas(filmstrip);
+        frames.push(canvas.toDataURL('image/png'));
+    }
     gifshot.createGIF({
-        images: imageUrls,
-        gifWidth: 300,
-        gifHeight: 200,
-        interval: 1
+        images: frames,
+        gifWidth: filmstrip.clientWidth,
+        gifHeight: filmstrip.clientHeight,
+        interval: 0.2
     }, function(obj) {
         generateBtn.disabled = false;
         if(!obj.error) {
@@ -77,7 +90,7 @@ generateBtn.addEventListener('click', () => {
             animatedImage.src = image;
             const downloadLink = document.createElement('a');
             downloadLink.href = image;
-            downloadLink.download = 'slideshow.gif';
+            downloadLink.download = 'film.gif';
             downloadLink.textContent = 'GIFをダウンロード';
 
             const output = document.getElementById('gif-output');
