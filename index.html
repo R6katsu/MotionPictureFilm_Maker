@@ -11,7 +11,25 @@
         align-items: stretch;
         width: 340px;
         margin: auto;
+        position: relative;
     }
+    .film-container::before,
+    .film-container::after {
+        content: "";
+        position: absolute;
+        left: 20px;
+        right: 20px;
+        height: 10px;
+        background: repeating-linear-gradient(
+            to right,
+            #444 0,
+            #444 6px,
+            #000 6px,
+            #000 10px
+        );
+    }
+    .film-container::before { top: 0; }
+    .film-container::after { bottom: 0; }
     .sprocket {
         width: 20px;
         background: repeating-linear-gradient(
